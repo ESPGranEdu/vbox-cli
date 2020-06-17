@@ -5,7 +5,7 @@
 # PARAMS: 		0
 #==========================================================================
 # Fetch VMs
-get_virtual_machines || exit 1
+get_virtual_machines || return 1
 
 # Unset VM from array if running
 for vm in "${!guests[@]}"; do
@@ -15,7 +15,7 @@ done
 # Check if all VMs are running
 ((${#guests[@]} == 0)) && {
 	display_info --warning "All VMs are running" 1>&2
-	exit 1
+	return 1
 }
 
 # Start VMs

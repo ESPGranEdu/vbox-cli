@@ -5,7 +5,7 @@
 # PARAMS: 		0
 #==========================================================================
 # Fetch VMs
-get_virtual_machines || exit 1
+get_virtual_machines || return 1
 
 # Grab all the running VMs
 echo -en "\e[KScanning..."
@@ -21,12 +21,12 @@ done
 # Check if there's no running VM
 ((${#guests[@]} > 0)) || {
 	display_info --warning "All VMs are paused..." 1>&2
-	exit 1
+	return 1
 }
 
 # Pause VMs
 mapfile -t vm < <(printf "%s\n" "${!guests[@]}" | fzf --prompt "Select the VMs (use TAB to choose VMs to pause simultaneously): ")
-((${#vm[@]} == 0)) && exit 1 # CTRL + C pressed
+((${#vm[@]} == 0)) && return 1 # CTRL + C pressed
 
 for v in "${vm[@]}"; do
 	echo -e "${light_blue}Pausing $v ...${reset}"

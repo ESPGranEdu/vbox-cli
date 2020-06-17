@@ -14,7 +14,7 @@ shopt -s checkwinsize													# Check window size when resizing
 export VIRTUALBOX_DIR="$HOME/VirtualBox VMs"                            # Usually VirtualBox creates a directory in the user's home folder
 export FZF_DEFAULT_OPTS='--height 50% --border --reverse --multi'       # Options for fuzzy finder
 export base_dir="$(dirname "$(readlink -f "$0")")"                      # Base location of the src folder
-export total_mem="$(free -m | awk '/^Mem:/ {printf "%0.0f", $2/1024}')" # Total memory in the system
+export total_mem="$(free -m | awk '/^Mem/ {printf "%0.0f", $2/1024}')" # Total memory in the system
 export network_interfaces=()                                            # Array to store network interfaces
 export total_cores="$(nproc)"                                           # Number of total cores in system
 declare -A guests; export guests                                        # Array to store VMs

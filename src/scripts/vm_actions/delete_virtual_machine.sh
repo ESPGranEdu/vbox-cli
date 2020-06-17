@@ -5,11 +5,11 @@
 # PARAMS: 		0
 #==========================================================================
 # Fetch VMs
-get_virtual_machines || exit 1
+get_virtual_machines || return 1
 
 # Select and erase VM
 mapfile -t vm < <(printf "%s\n" "${!guests[@]}" | fzf --prompt "Select the VMs (use TAB to choose VMs to delete simultaneously): ")
-((${#vm[@]} == 0)) && exit 1 # CTRL + C pressed
+((${#vm[@]} == 0)) && return 1 # CTRL + C pressed
 
 for v in "${vm[@]}"; do
 	echo -e "${light_red}Erasing $v...${reset}"

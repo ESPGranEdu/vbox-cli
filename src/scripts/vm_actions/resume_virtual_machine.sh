@@ -5,7 +5,7 @@
 # PARAMS: 		0
 #==========================================================================
 # Fetch VMs
-get_virtual_machines || exit 1
+get_virtual_machines || return 1
 
 # Grab all the running VMs
 for vm in "${guests[@]}"; do
@@ -19,11 +19,11 @@ done
 
 ((${#guests[@]} == 0)) && {
 	display_info --warning "There's no VMs paused..." 1>&2
-	exit 1
+	return 1
 }
 # Resume VMs
 mapfile -t vm < <(printf "%s\n" "${!guests[@]}" | fzf --prompt "Select the VMs (use TAB to choose VMs to resume simultaneously): ")
-((${#vm[@]} == 0)) && exit 1 # CTRL + C pressed
+((${#vm[@]} == 0)) && return 1 # CTRL + C pressed
 
 for v in "${vm[@]}"; do
 	echo -e "${light_blue}Resuming $vm ...${reset}"

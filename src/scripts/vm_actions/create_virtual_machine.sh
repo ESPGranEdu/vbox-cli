@@ -30,11 +30,11 @@ echo "$(bolder "[ $(random_color "$oc") ${bold}]") What type of OS it will be?: 
 
 # Set the memory, CPU cores, VRAM for the VM and check if the user input is valid
 ((oc++))
-read -rp "$(bolder "[ $(random_color "$oc") ${bold}]") Set the memory (in MB): $(printf "%.*f" 0 "$total_mem") GB / " memory
+read -rp "$(bolder "[ $(random_color "$oc") ${bold}]") Set the memory (in MB): $(printf "%0.0f" "$total_mem") GB / " memory
 while ((memory > (total_mem*1024) || memory <= 0)); do
 	(( memory > (total_mem*1024) )) && display_info --error "Memory value ($memory) higher than host memory!"
 	(( memory <= 0 )) && display_info --error "Invalid memory value"
-	read -rp "$(bolder "[ $(random_color "$oc") ${bold}]") Set the memory (in MB): $(printf "%.*f" 0 "$total_mem") GB / " memory
+	read -rp "$(bolder "[ $(random_color "$oc") ${bold}]") Set the memory (in MB): $(printf "%0.0f" "$total_mem") GB / " memory
 done
 
 ((oc++))
@@ -131,4 +131,6 @@ read -rp "Do you want to start the VM? (yes/no): " sel
 	vboxmanage startvm "$vm_name" &>/dev/null
 }
 
+# Cache VM info
+cache_vm_info
 

@@ -89,7 +89,7 @@ def vm_info():
         except Exception:
             continue
 
-    # Send JSON
+    # Return VMs info as JSON
     return jsonify(vms_info)
 
 
@@ -105,7 +105,7 @@ def add_headers(r):
     r.headers['Cache-Control'] = 'public, max-age=0'
     return r
 
-# Return VMs info as JSON
+
 @app.route("/")
 def index():
     return render_template("index.html")
@@ -113,4 +113,4 @@ def index():
 
 # Run server
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run()
