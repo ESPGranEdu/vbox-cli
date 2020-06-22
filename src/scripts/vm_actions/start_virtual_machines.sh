@@ -25,10 +25,10 @@ read -rp "Start in Headless mode? (default no): " ans
 
 for v in "${vm[@]}"; do
 	if [[ "${ans,,}" == @(no|n|) ]]; then
-		echo -e "${light_blue}Starting ${light_yellow}$v${light_blue}...${reset}"
+		display_info --info "${light_blue}Starting ${light_yellow}$v${light_blue}${reset}"
 		(vboxmanage startvm "$v" &) &>/dev/null
 	else
-		echo -e "${light_blue}Starting ${light_yellow}$v ${light_blue}in headless mode...${reset}"
+		display_info --info "${light_blue}Starting ${light_yellow}$v ${light_blue}in headless mode${reset}"
 		(vboxmanage startvm "$v" --type headless &) &>/dev/null
 	fi
 done

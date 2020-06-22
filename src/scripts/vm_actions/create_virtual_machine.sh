@@ -4,6 +4,8 @@
 # DESCRIPTION: 	Creates a virtual machine
 # PARAMS: 		0
 #==========================================================================
+# Variables
+local oc=0
 
 ((oc++))
 read -rp "$(bolder "[ $(random_color "$oc") ${bold}]") Insert VM name: " vm_name
@@ -126,10 +128,10 @@ vboxmanage modifyvm "$vm_name" --vram "$vram" &>/dev/null
 
 # Ask the user if he wants to turn on the VM
 read -rp "Do you want to start the VM? (yes/no): " sel
-[[ "${sel,,}" == @(yes|y|"") ]] && {
+if [[ "${sel,,}" == @(yes|y|"") ]]; then
 	echo -e "${light_blue}Starting $vm_name...${reset}"
 	vboxmanage startvm "$vm_name" &>/dev/null
-}
+fi
 
 # Cache VM info
 cache_vm_info

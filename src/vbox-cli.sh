@@ -6,8 +6,8 @@
 # VERSION: 		1.0
 #========================================================================
 # Enabling usefull configs for bash session
-shopt -s extglob														# Enable extended glob expansion
 shopt -s checkwinsize													# Check window size when resizing
+shopt -s extglob														# Enable extended glob expansion
 #set -euo pipefail														# Bash strict mode
 
 # Global variables
@@ -16,6 +16,7 @@ export FZF_DEFAULT_OPTS='--height 50% --border --reverse --multi'       # Option
 export base_dir="$(dirname "$(readlink -f "$0")")"                      # Base location of the src folder
 export total_mem="$(free -m | awk '/^Mem/ {printf "%0.0f", $2/1024}')" # Total memory in the system
 export network_interfaces=()                                            # Array to store network interfaces
+export natnets=()														# Array to store nat networks
 export total_cores="$(nproc)"                                           # Number of total cores in system
 declare -A guests; export guests                                        # Array to store VMs
 export scripts_path=()													# Array to store scripts path
@@ -59,7 +60,7 @@ function fetch_scripts() {
 	for script in $folder; do
 
 		scripts_path["$script_number"]="$script"
-		scripts_description["$script_number"]=$(grep "DESCRIPTION:" "$script" | awk -F: '{gsub(/^[ \t\r\n]+/, "", $2); print $2}')
+		scripts_description["$script_number"]=$(grep -m1 "DESCRIPTION:" "$script" | awk -F: '{gsub(/^[ \t\r\n]+/, "", $2); print $2}')
 		scripts_name["$script_number"]="${script##*/}"
 
 		((script_number++))
@@ -101,11 +102,17 @@ function menu() {
 
 	# Fetch scripts from selected folder
 	read -rp "Select -> " user_input
-	if (( user_input > nfolder )); then
-		display_info --error "Number ($user_input) out of range, try again..."
+	if [[ "$user_input" -gt "$nfolder"  || ! "$user_input" =~ ^[0-9]+$ ]] 2>/dev/null; then
+
+		if [[ "$user_input" -gt "$nfolder" || "$user_input" -eq 0 ]] 2>/dev/null; then
+			display_info --error "Number ($user_input) out of range, try again..."
+		else
+			display_info --error "Invalid option ($user_input)"
+		fi
+
 		return 1
 	else
-		fetch_scripts "${scripts_folder[$user_input]}" || return
+		fetch_scripts "${scripts_folder[$user_input]}" || return 1
 	fi
 
 
@@ -119,8 +126,14 @@ function menu() {
 
 	# Exec script
 	read -rp "Select an action -> " user_input
-	if (( user_input > nscripts )); then
-		display_info --error "Number ($user_input) out of range, try again..."
+	if ((user_input > nscripts)) || ! [[ "$user_input" =~ ^[0-9]+$ ]] 2>/dev/null ; then
+
+		if [[ "$user_input" -gt "$nscripts" || "$user_input" -eq 0 ]] 2>/dev/null; then
+			display_info --error "Number ($user_input) out of range, try again..."
+		else
+			display_info --error "Invalid option ($user_input)"
+		fi
+
 		return 1
 	else
 		source "${scripts_path[$user_input]}"
@@ -131,6 +144,7 @@ function menu() {
 
 # Call the menu function to start the script
 while true; do
-	menu; read -rsp "Press Enter to continue"
+	menu
+	read -rsp "Press Enter to continue"
 done
 

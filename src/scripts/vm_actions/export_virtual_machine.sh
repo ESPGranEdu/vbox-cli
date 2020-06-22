@@ -27,9 +27,12 @@ mapfile -t vm < <(printf "%s\n" "${!guests[@]}" | fzf --prompt "Select the VMs (
 read -rep "Choose the destination to store the .ova files: " dest_path
 for v in "${vm[@]}"; do
     ova_path="${dest_path}/$v.ova"
-    display_info --info "${light_blue}Exporting ${light_yellow}$v${reset}"
     (vboxmanage export "$v" -o "$ova_path" &>/dev/null) &
-    fancy_waiter "$(get_pid vboxmanage)" vboxmanage export "$v" -o "$ova_path" &>/dev/null
+
+	fancy_waiter "$(get_pid vboxmanage)" \
+		"$(display_info --info "${light_blue}Exporting ${light_yellow}$v${reset}")" \
+		"$(display_info --error "Something went wrong exporting ${light_yellow}$v${reset}")"
+
     (($? == 0)) && ((exported_vms++))
 done
 

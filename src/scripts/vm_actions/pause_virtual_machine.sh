@@ -8,13 +8,12 @@
 get_virtual_machines || return 1
 
 # Grab all the running VMs
-echo -en "\e[KScanning..."
-for vm in "${guests[@]}"; do
+for vm in "${!guests[@]}"; do
 	if { ps ax -o command | grep -v grep | grep -q "$vm"; }; then
 		vm_state=$(vboxmanage showvminfo "$vm" | grep State | awk '{print $2}')
-		[[ "$vm_state" == "paused" ]] && unset_guest_value "$vm" "${guests[@]}"
+		[[ "$vm_state" == "paused" ]] && unset_guest_value "$vm"
 	else
-		unset_guest_value "$vm" "${guests[@]}"
+		unset_guest_value "$vm"
 	fi
 done
 
@@ -29,6 +28,6 @@ mapfile -t vm < <(printf "%s\n" "${!guests[@]}" | fzf --prompt "Select the VMs (
 ((${#vm[@]} == 0)) && return 1 # CTRL + C pressed
 
 for v in "${vm[@]}"; do
-	echo -e "${light_blue}Pausing $v ...${reset}"
+	display_info --info "${light_blue}Pausing ${light_yellow}$v${reset}"
 	(vboxmanage controlvm "$v" pause &) &>/dev/null
 done

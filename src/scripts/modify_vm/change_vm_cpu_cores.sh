@@ -14,14 +14,17 @@ ps ax -o command | grep -v grep | grep -q "$vm" && {
 	return
 }
 
-# Change CPU cores
-actual_vm_cpu_cores=$(vboxmanage showvminfo "$vm" | grep "Number of CPUs:" | awk -F: '{print $2}' | tr -d " ")
+#Change CPU cores
+vm_info="${guests[$vm]}/${vm}_vbox-cli.info"
+actual_vm_cpu_cores=$(grep "Number of CPUs:" "$vm_info" | awk -F: '{print $2}' | tr -d " ")
 read -rp "How many cores do you want to assing (actual core count: $actual_vm_cpu_cores): " cpu_cores
 while ((cpu_cores == 0 || cpu_cores > total_cores)); do
 	display_info --error "Specified amount ($cpu_cores) is higher than host core count ($total_cores)" 1>&2
 	read -rp "How many cores do you want to assing (actual: $actual_vm_cpu_cores): " cpu_cores
 done
 
-echo -e "${light_blue}Changing ${light_yellow}$actual_vm_cpu_cores${reset} ${light_blue}cores to ${light_yellow}$cpu_cores${reset} ${light_blue}for ${light_cyan}$vm${reset}"
+display_info --info "${light_blue}Changing ${light_yellow}$actual_vm_cpu_cores${reset} ${light_blue}cores to ${light_yellow}$cpu_cores${reset} ${light_blue}for ${light_cyan}$vm${reset}"
 vboxmanage modifyvm "$vm" --cpus "$cpu_cores"
 
+# Update the cached info
+cache_vm_info "$vm"

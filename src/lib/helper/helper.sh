@@ -24,7 +24,6 @@ function unset_guest_value() {
 	# Loop over the array to find the value and then unset it
 	for i in "${!guests[@]}"; do
 		[[ "$i" == "$value_to_delete" ]] && {  unset "guests[$i]" && continue; }
-		echo $?
 	done
 }
 
@@ -50,7 +49,7 @@ function display_info() {
                         ;;
                 --error)
                         msg_header="[ ${bold_red}ERROR${reset} ]"
-                        echo -e "$msg_header $2"
+                        echo -e "$msg_header $2" 1>&2
 						;;
                 --info) msg_header="[ ${bold_green}INFO${reset} ]"
                         echo -e "$msg_header $2"
@@ -72,7 +71,7 @@ function display_info() {
 function fancy_waiter() {
 	tput civis # Hide cursor
 	local process_pid="$1"
-	local msg="$2"
+	local wait_msg="$2"
 	local err_msg="$3"
 	local exit_code=0
 
@@ -81,7 +80,7 @@ function fancy_waiter() {
 	tput sc # Save cursor position
 	while ps ax -o pid | grep -q "$process_pid"; do
 		for c in "|" "/" "-" "\\"; do
-			echo -en "$wait_msg"
+			echo -en "$wait_msg $c"
 			tput rc # Restore cursor position
 			sleep 0.2
 		done
@@ -92,7 +91,7 @@ function fancy_waiter() {
 	exit_code="$?"
 
 	# Clear current line when finished
-	echo -e "\e[K"
+	echo -en "\e[K"
 	tput cnorm # Set cursor visible again
 	return $exit_code
 }
@@ -107,7 +106,7 @@ function fancy_waiter() {
 #===========================================================================
 function get_pid() {
 	local process_name="$1"
-	local pid="$(ps ax -o pid,command | grep -v grep | grep "$process_name" | awk '{ print $1 }')"
+	local pid="$(ps ax -o pid,command | grep -v grep | grep -i "$process_name" | awk '{ print $1 }')"
 
 	if ! [[ "$pid" ]]; then
 		display_info --error "Process \"$process_name\" not found"
@@ -115,4 +114,31 @@ function get_pid() {
 	else
 		echo "$pid"
 	fi
+}
+
+#===== FUNCTION ============================================================
+# NAME: check_nat_net_exists
+# DESCRIPTION: Check a given NAT Network exists
+# PARAMS: 1
+#	$1 -> nat_network
+# RETURNS:
+#	0 -> Exists
+#	1 -> Doesn't exists
+# EXAMPLE:
+#	check_nat_net_exists "NAT Network" -> ($? = 0)
+#===========================================================================
+function check_nat_net_exists() {
+	# Variables
+	local nat_network="$1"
+	! [[ "$1" ]] && {
+		display_info --error "Pass a NAT Network"
+		return 1
+	}
+
+	get_nat_networks || return 1
+
+	for net in "${natnets[@]}"; do
+		[[ "$nat_network"  == "$net" ]] && return 0
+	done
+	return 1
 }

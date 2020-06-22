@@ -39,12 +39,49 @@ function get_virtual_machines() {
 #   1 -> All network interfaces are DOWN
 #==========================================================================
 function get_network_interfaces() {
-        local IFS=$'\n'
-        mapfile -t network_interfaces < <(ip a | grep -E "state.+UP" | awk -F: '{print $2}')
+	local IFS=$'\n'
+	local detected_network_interfaces
+	while read interface; do
+		detected_network_interfaces+=("$interface")
+	done < <(ip a | grep -E "state.+UP" | awk -F: '{print $2}')
 
-        ((${#network_interfaces[@]} == 0)) &&
-			{ display_info --error "There was an error fetching the network interfaces" && return 1; }
-        return 0
+	((${#detected_network_interfaces[@]} == 0)) &&
+		{ display_info --error "There was an error fetching the network interfaces" && return 1; }
+
+	# Sustitute the contents if they changed
+	if (( ${#network_interfaces[@]} < ${#detected_network_interfaces[@]})); then
+		network_interfaces=("${detected_network_interfaces[@]}")
+	fi
+
+	return 0
+}
+
+#===== FUNCTION ===========================================================
+# NAME: get_nat_networks
+# DESCRIPTION: Fetch all nat networks available in the host
+# PARAMS: 0
+# MODIFIED GLOBALS: natnets[]
+# RETURNS:
+#   0 -> natnets[]
+#   1 -> 0 nat networks in the host
+#==========================================================================
+function get_nat_networks() {
+	local IFS=$'\n'
+	local detected_nat_nets
+
+	while read network; do
+		detected_nat_nets+=("$network")
+	done < <(vboxmanage list natnets | grep "NetworkName:" | awk '{ print $2 }')
+
+	((${#detected_nat_nets[@]} == 0)) &&
+		{ display_info --error "There aren't Nat Networks in the host" && return 1; }
+
+	# Sustitute the contents if they changed
+	if (( ${#natnets[@]} < ${#detected_nat_nets[@]})); then
+		natnets=("${detected_nat_nets[@]}")
+	fi
+
+	return 0
 }
 
 #==== FUNCTION ==========================================================
@@ -56,7 +93,18 @@ function get_network_interfaces() {
 #========================================================================
 function cache_vm_info() {
 	local IFS=$'\n'
-	get_virtual_machines || return 1
+	local machine="$1"
+	get_virtual_machines 2>/dev/null || return 1 # No need to see here the errors
+
+	# If a machine was passed, cache that machine only
+	if [[ "$machine" ]]; then
+		vm_dir="${guests[$machine]}"
+		vm_info="${vm_dir}/${machine}_vbox-cli.info"
+        vm_disk="$(find "$vm_dir" -iname "*.vdi" -or -iname "*.vmdk")"
+        display_info --info "Updating \"$machine\" info"
+        (vboxmanage showvminfo "$machine" && vboxmanage showmediuminfo "$vm_disk") >"$vm_info"
+		return 0
+	fi
 
 	# Cache info from each VM
 	for vm in "${!guests[@]}"; do
@@ -64,7 +112,7 @@ function cache_vm_info() {
 		vm_info="${vm_dir}/${vm}_vbox-cli.info" # Path to store the VM info
         vm_disk="$(find "$vm_dir" -iname "*.vdi" -or -iname "*.vmdk")"
 		[[ -f "$vm_info" ]] && continue
-		display_info --info "Caching ${light_yellow}\"$vm\"${reset} info into ${light_green}\"$vm_info\"${reset}"
+		display_info --info "Caching ${light_yellow}\"$vm\"${reset}"
         (vboxmanage showvminfo "$vm" && vboxmanage showmediuminfo "$vm_disk") >"$vm_info"
 	done
 }
